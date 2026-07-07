@@ -233,17 +233,38 @@ class Player:
 
         self.choosing_level_up = False
         return result
-
+    
     def draw(self, screen: pg.Surface) -> None:
-        """プレイヤーを描画する。"""
-        pg.draw.ellipse(screen, (55, 55, 55), (self.rect.x - 2, self.rect.bottom - 9, 38, 13))
-        pg.draw.rect(screen, PLAYER_BLUE, self.rect, border_radius=8)
-        pg.draw.circle(screen, (255, 220, 158), (self.rect.centerx, self.rect.y + 10), 11)
-        pg.draw.circle(screen, (242, 191, 59), (self.rect.centerx, self.rect.y + 5), 11)
+        """Draw the player character."""
 
-        # 向いている方向を線で表示する。
+        # Player shadow
+        pg.draw.ellipse(
+            screen,
+            (55, 55, 55),
+            (self.rect.x - 2, self.rect.bottom - 9, 38, 13),
+        )
+
+        # Player body
+        pg.draw.rect(screen, PLAYER_BLUE, self.rect, border_radius=8)
+
+        # Player face and hair
+        pg.draw.circle(
+            screen,
+            (255, 220, 158),
+            (self.rect.centerx, self.rect.y + 10),
+            11,
+        )
+        pg.draw.circle(
+            screen,
+            (242, 191, 59),
+            (self.rect.centerx, self.rect.y + 5),
+            11,
+        )
+
+        # Shows the direction of shooting and melee attacks
         tip = pg.Vector2(self.rect.center) + self.direction * 28
         pg.draw.line(screen, WHITE, self.rect.center, tip, 3)
+
 
 
 class OnigiriEnemy:
@@ -278,6 +299,8 @@ class OnigiriEnemy:
         """おにぎり敵とHPバーを描画する。"""
         pg.draw.ellipse(screen, (54, 44, 64), (self.rect.x, self.rect.bottom - 7, 38, 12))
 
+    
+
         # 三角形のおにぎり本体
         points = [
             (self.rect.centerx, self.rect.y),
@@ -299,6 +322,7 @@ class OnigiriEnemy:
         pg.draw.rect(screen, HP_RED, (bar.x, bar.y, width, bar.height))
 
 
+
 def draw_bar(
     screen: pg.Surface,
     rect: pg.Rect,
@@ -315,28 +339,9 @@ def draw_bar(
     pg.draw.rect(screen, UI_LIGHT, rect, 2, border_radius=5)
 
 
-def draw_world(screen: pg.Surface) -> None:
-    """おにぎり敵と戦うための見下ろし型ワールドを描画する。"""
-    screen.fill(SAND)
-
-    # 海
-    pg.draw.rect(screen, WATER, (720, 0, WIDTH - 720, 430))
-    for y in range(35, 420, 26):
-        for x in range(740 + (y % 40), WIDTH, 54):
-            pg.draw.arc(screen, (129, 230, 244), (x, y, 26, 12), 0.2, 2.8, 2)
-
-    # 移動・戦闘用の広い草地
-    pg.draw.rect(screen, GRASS, (0, 430, 480, 185), border_radius=30)
-    pg.draw.rect(screen, GRASS, (680, 470, 390, 140), border_radius=25)
-
-    # 遺跡の飾り。移動を邪魔しない配置にする。
-    for x, y in [(85, 155), (205, 500), (555, 220), (870, 540)]:
-        pg.draw.rect(screen, STONE, (x, y, 85, 24), border_radius=5)
-        pg.draw.rect(screen, DARK_STONE, (x + 4, y + 7, 77, 13), border_radius=5)
-
-    # ポータル
-    pg.draw.ellipse(screen, (75, 49, 140), (560, 490, 72, 92))
-    pg.draw.ellipse(screen, (173, 109, 255), (571, 501, 50, 70))
+def draw_world(screen: pg.Surface, bg_img: pg.Surface) -> None:
+    """背景画像をゲーム画面に描画する。"""
+    screen.blit(bg_img, (0, 0))
 
 
 def draw_gui(
@@ -434,6 +439,10 @@ def main() -> None:
     pg.display.set_caption("ヴェルダラ：砕かれた門")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
+
+    # 背景画像を読み込み，ゲーム画面の大きさに合わせる。
+    bg_img = pg.image.load("fig/Stage1.png").convert()
+    bg_img = pg.transform.scale(bg_img, (WIDTH, HEIGHT))
 
     font = pg.font.Font(None, 27)
     small_font = pg.font.Font(None, 20)
@@ -552,7 +561,7 @@ def main() -> None:
                 game_over = True
 
         # 3. ワールド，オブジェクト，GUIを描画する。
-        draw_world(screen)
+        draw_world(screen, bg_img)
 
         # 画面下側にあるオブジェクトを後から描画して，簡単な奥行きを表現する。
         objects = [(enemy.rect.bottom, enemy) for enemy in enemies]
