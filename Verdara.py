@@ -627,7 +627,7 @@ def main() -> None:
                     elif enemy_rispoon_hantei == 1:
                         enemies.append(YakiOnigiriEnemy((spawn_x, spawn_y)))
                     elif enemy_rispoon_hantei == 2:
-                        enemies.append(OmuraisuEnemy(spawn_x,spawn_y))
+                        enemies.append(OmuraisuEnemy((spawn_x,spawn_y)))
 
             # 時間切れのフローティングメッセージを削除する。
             for text in texts[:]:
