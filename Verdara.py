@@ -303,7 +303,7 @@ class OnigiriEnemy:
         pg.draw.rect(screen, HP_RED, (bar.x, bar.y, width, bar.height))
 
 
-class YakiOnigiriEnemy():
+class YakiOnigiriEnemy(OnigiriEnemy):
     """プレイヤーを追跡して攻撃するおにぎり型の敵クラス。"""
 
     def __init__(self, pos: tuple[int, int]) -> None:
@@ -315,21 +315,6 @@ class YakiOnigiriEnemy():
         self.attack_timer = 1.3
         self.exp_reward = 35
 
-    def update(self, dt: float, player: Player) -> int:
-        """プレイヤーを追跡し，攻撃した場合はダメージを返す。"""
-        to_player = pg.Vector2(player.rect.center) - pg.Vector2(self.rect.center)
-        distance = to_player.length()
-
-        if 42 < distance < 250:
-            direction = to_player.normalize()
-            self.rect.x += round(direction.x * self.speed * dt)
-            self.rect.y += round(direction.y * self.speed * dt)
-
-        self.attack_timer -= dt
-        if distance <= 44 and self.attack_timer <= 0:
-            self.attack_timer = 0.85
-            return self.attack
-        return 0
 
     def draw(self, screen: pg.Surface) -> None:
         """おにぎり敵とHPバーを描画する。"""
@@ -356,7 +341,7 @@ class YakiOnigiriEnemy():
         pg.draw.rect(screen, HP_RED, (bar.x, bar.y, width, bar.height))
 
 
-class OmuraisuEnemy:
+class OmuraisuEnemy(OnigiriEnemy):
     """プレイヤーを追跡して攻撃するおにぎり型の敵クラス。"""
 
     def __init__(self, pos: tuple[int, int]) -> None:
@@ -368,21 +353,7 @@ class OmuraisuEnemy:
         self.attack_timer = 0.8
         self.exp_reward = 50
 
-    def update(self, dt: float, player: Player) -> int:
-        """プレイヤーを追跡し，攻撃した場合はダメージを返す。"""
-        to_player = pg.Vector2(player.rect.center) - pg.Vector2(self.rect.center)
-        distance = to_player.length()
 
-        if 42 < distance < 250:
-            direction = to_player.normalize()
-            self.rect.x += round(direction.x * self.speed * dt)
-            self.rect.y += round(direction.y * self.speed * dt)
-
-        self.attack_timer -= dt
-        if distance <= 44 and self.attack_timer <= 0:
-            self.attack_timer = 0.85
-            return self.attack
-        return 0
 
     def draw(self, screen: pg.Surface) -> None:
         """おにぎり敵とHPバーを描画する。"""
