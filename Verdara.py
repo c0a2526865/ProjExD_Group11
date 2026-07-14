@@ -304,9 +304,15 @@ class OnigiriEnemy:
 
 
 class YakiOnigiriEnemy(OnigiriEnemy):
-    """プレイヤーを追跡して攻撃するおにぎり型の敵クラス。"""
+    """
+    プレイヤーを追跡して攻撃する焼おにぎり型の敵クラス。
+    """
 
     def __init__(self, pos: tuple[int, int]) -> None:
+        """
+        引数：座標
+        戻り値：なし
+        """
         self.rect = pg.Rect(pos[0], pos[1], 38, 34)
         self.max_hp = 30
         self.hp = self.max_hp
@@ -317,15 +323,18 @@ class YakiOnigiriEnemy(OnigiriEnemy):
 
 
     def draw(self, screen: pg.Surface) -> None:
-        """おにぎり敵とHPバーを描画する。"""
+        """
+        焼おにぎり敵とHPバーを描画する。
+        """
         pg.draw.ellipse(screen, (54, 44, 64), (self.rect.x, self.rect.bottom - 7, 38, 12))
 
-        # 三角形のおにぎり本体
+        # 焼おにぎり本体
         points = [
             (self.rect.centerx, self.rect.y),
             (self.rect.right, self.rect.bottom),
             (self.rect.left, self.rect.bottom),
         ]
+        #焼きおにぎり本体の描画
         pg.draw.polygon(screen, ONIGIRI_BROWN, points)
         pg.draw.polygon(screen, BLACK, points, 2)
 
@@ -342,9 +351,16 @@ class YakiOnigiriEnemy(OnigiriEnemy):
 
 
 class OmuraisuEnemy(OnigiriEnemy):
-    """プレイヤーを追跡して攻撃するおにぎり型の敵クラス。"""
+    """
+    プレイヤーを追跡して攻撃するオムライス型の敵クラス。
+    
+    """
 
     def __init__(self, pos: tuple[int, int]) -> None:
+        """
+        引数：座標
+        戻り値：なし
+        """
         self.rect = pg.Rect(pos[0], pos[1], 38, 34)
         self.max_hp = random.randint(80, 100)
         self.hp = self.max_hp
@@ -359,19 +375,11 @@ class OmuraisuEnemy(OnigiriEnemy):
         """おにぎり敵とHPバーを描画する。"""
         pg.draw.ellipse(screen, (54, 44, 64), (self.rect.x, self.rect.bottom - 7, 38, 12))
 
-        # 三角形のおにぎり本体
-        # points = [
-        #     (self.rect.centerx, self.rect.y),
-        #     (self.rect.right, self.rect.bottom),
-        #     (self.rect.left, self.rect.bottom),
-            
-        # ]
+        #おにぎり本体の描画
         pg.draw.circle(screen, ONIGIRI_BROWN, self.rect.center,15)
-        # pg.draw.polygon(screen, BLACK, print, 2)
         pg.draw.circle(screen, ONIGIRI_YELLO, self.rect.center,13)
 
-        # # のりと目
-        # pg.draw.rect(screen, NORI_BLACK, (self.rect.centerx , self.rect.bottom - 1, 3, 4), border_radius=2)
+        # 目
         pg.draw.circle(screen, BLACK, (self.rect.centerx - 6, self.rect.centery + 2), 2)
         pg.draw.circle(screen, BLACK, (self.rect.centerx + 6, self.rect.centery + 2), 2)
 
@@ -523,6 +531,7 @@ def main() -> None:
     large_font = pg.font.Font(None, 56)
 
     player = Player()
+    #初期エネミーの設定
     enemies = [
         OnigiriEnemy((260, 270)),
         YakiOnigiriEnemy((420, 480)),
@@ -621,7 +630,9 @@ def main() -> None:
                         texts.append(FloatingText("LEVEL UP!", player.rect.midtop, GUN_YELLOW))
                     spawn_x = random.choice([random.randint(80, 600), random.randint(710, 1000)])
                     spawn_y = random.randint(180, 560)
+                    # エネミーをランダムで生成するための判定用変数
                     enemy_rispoon_hantei = random.choice((0,1,2))
+                    # エネミーのランダム生成
                     if enemy_rispoon_hantei == 0:
                         enemies.append(OnigiriEnemy((spawn_x, spawn_y)))
                     elif enemy_rispoon_hantei == 1:
