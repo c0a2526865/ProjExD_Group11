@@ -876,9 +876,17 @@ def draw_victory_screen(screen: pg.Surface, font: pg.font.Font, large_font: pg.f
         message.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 25)),
     )
 
+def play_bgm(path: str, volume: float = 0.5) -> None: # BGMを追加
+    """BGMを切り替えて再生する。"""
+    pg.mixer.music.stop()
+    pg.mixer.music.load(path)
+    pg.mixer.music.set_volume(volume)
+    pg.mixer.music.play(-1)
+
 def main() -> None:
     """ゲームを初期化し，メインループを実行する。"""
     pg.init()
+    pg.mixer.init()
     pg.display.set_caption("ヴェルダラ：砕かれた門")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
@@ -909,7 +917,27 @@ def main() -> None:
     # タイトル画像をゲーム画面と同じサイズに変更する。
     title_img = pg.transform.scale(title_img, (WIDTH, HEIGHT))
 
+    # 効果音を読み込む。
+    
+    shotgun_sound = pg.mixer.Sound("sound/double_barrel_shot.mp3")
+    assault_rifle_sound = pg.mixer.Sound("sound/assault_rifle_shot.mp3")
+    heal_sound = pg.mixer.Sound("sound/heal.mp3")
+    level_up_sound = pg.mixer.Sound("sound/level_up.mp3")
+    boss_defeat_sound = pg.mixer.Sound("sound/boss_defeat.wav")
+    game_over_sound = pg.mixer.Sound("sound/game_over.wav")
+
+    # 音量調整
+    assault_rifle_sound.set_volume(0.35)
+    heal_sound.set_volume(0.6)
+    level_up_sound.set_volume(0.6)
+    boss_defeat_sound.set_volume(0.7)
+    game_over_sound.set_volume(0.7)
+    shotgun_sound.set_volume(0.5)
+
     player = Player()
+
+    current_gun = "assault"
+
     #初期エネミーの設定
     enemies = [
         OnigiriEnemy((260, 270)),
@@ -930,6 +958,7 @@ def main() -> None:
 
     game_over = False
     game_state = TITLE
+    current_bgm = "" # 現在再生中のBGMのパスを記録する変数
     boss_spawned = False # ボスが出現したかどうかを確認するフラグ
     boss_spawning = False # ボス出現の準備中かどうかを確認するフラグ
     boss_spawn_timer = 0.0 # ボス出現までのカウント
@@ -939,6 +968,26 @@ def main() -> None:
     while running:
         # 1フレームにかかった時間（秒）。FPSが変化しても速度を一定に保つ。
         dt = clock.tick(FPS) / 1000
+        # ゲーム状態に合わせてBGMを切り替える。
+        if game_state == TITLE and current_bgm != "title":
+            play_bgm("sound/title_screen.mp3")
+            current_bgm = "title"
+
+        elif game_state == PLAYING:
+            if boss_spawned:
+                if stage_number == 1 and current_bgm != "stage1_boss":
+                    play_bgm("sound/Stage1_Boss.mp3")
+                    current_bgm = "stage1_boss"
+                elif stage_number == 2 and current_bgm != "stage2_boss":
+                    play_bgm("sound/Stage2_Boss.mp3")
+                    current_bgm = "stage2_boss"
+            else:
+                if stage_number == 1 and current_bgm != "stage1":
+                    play_bgm("sound/Stage1.mp3")
+                    current_bgm = "stage1"
+                elif stage_number == 2 and current_bgm != "stage2":
+                    play_bgm("sound/Stage2.mp3", 1.0)
+                    current_bgm = "stage2"
 
         # 1. ウィンドウイベントとキーボード入力を処理する。
         for event in pg.event.get():
@@ -971,10 +1020,25 @@ def main() -> None:
                     # Jキー：銃を撃つ
                     elif event.key == pg.K_j:
                         new_bullets = player.try_shoot()
+
                         if new_bullets:
-                            # 複数の弾のリストが返ってくるため、extendで追加する
                             bullets.extend(new_bullets)
+
+                            # プレイヤーが装備している武器に合わせて効果音を鳴らす。
+                            if isinstance(player.equipped_gun, DoubleBarrelShotgun):
+                                shotgun_sound.play()
+                            elif isinstance(player.equipped_gun, AssaultRifle):
+                                assault_rifle_sound.play()
+
                         else:
+                            if player.equipped_gun.current_ammo < player.equipped_gun.mp_cost:
+                                texts.append(
+                                    FloatingText(
+                                        "No Ammo",
+                                        player.rect.midtop,
+                                        MP_BLUE,
+                                    )
+                                )
                             if player.equipped_gun.current_ammo < player.equipped_gun.mp_cost:
                                 texts.append(FloatingText("No Ammo", player.rect.midtop, MP_BLUE))
 
@@ -992,6 +1056,7 @@ def main() -> None:
                     # Lキー：回復スキル
                     elif event.key == pg.K_l:
                         if player.use_heal_skill():
+                            heal_sound.play()
                             texts.append(
                                 FloatingText(
                                     "+35 HP",
@@ -1085,6 +1150,7 @@ def main() -> None:
                                 # プレイヤー狙い3連射
                                 bullet = enemy.shoot(player)
                                 if bullet:
+                                    assault_rifle_sound.play()
                                     enemy_bullets.append(bullet)
 
                                 enemy.burst_timer = 0.1
@@ -1138,7 +1204,12 @@ def main() -> None:
                             elif enemy.burst_type == 2:
                                 bullet = enemy.shoot(player)
                                 if bullet:
-                                    enemy_bullets.append(bullet)
+                                    bullets.append(bullet)
+
+                                    if current_gun == "assault":
+                                        assault_rifle_sound.play()
+                                    elif current_gun == "shotgun":
+                                        shotgun_sound.play()
 
                             enemy.burst_count -= 1
                             enemy.burst_timer = 0.1
@@ -1203,6 +1274,7 @@ def main() -> None:
 
                     # ボスを倒したら勝利画面へ移動する。
                     if isinstance(enemy, (OnigiriBoss1, OnigiriBoss2)):
+                        boss_defeat_sound.play()
                         game_state = VICTORY
                         victory_timer = 2.0
                         enemy_bullets.clear()
@@ -1211,6 +1283,7 @@ def main() -> None:
                         continue
 
                     if player.gain_exp(enemy.exp_reward):
+                        level_up_sound.play()
                         texts.append(FloatingText("LEVEL UP!", player.rect.midtop, GUN_YELLOW))
                     # 10体倒したらボスを出現させる。
                     if defeated_count >= 10 and not boss_spawned and not boss_spawning:
@@ -1251,6 +1324,9 @@ def main() -> None:
 
             if player.hp <= 0:
                 player.hp = 0
+                if not game_over:
+                    game_over_sound.play()
+                    pg.mixer.music.stop()
                 game_over = True
 
         # 勝利画面を一定時間表示した後，次のステージへ移動する。
